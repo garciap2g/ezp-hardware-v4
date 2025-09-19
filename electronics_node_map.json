@@ -1,0 +1,446 @@
+{
+  "project_name": "EzPowerV4 - REV09",
+  "description": "Electronics node map for EzPower v4 EVSE charging system",
+  "version": "REV09",
+  "date": "2025-07-24",
+
+  "power_domains": {
+    "AC_INPUT": {
+      "voltage": "230V AC / 400V AC 3-phase",
+      "nodes": ["PHASE_1_IN", "PHASE_2_IN", "PHASE_3_IN", "NEUTRAL_IN", "EARTH"],
+      "description": "AC input power from grid"
+    },
+    "DC_12V": {
+      "voltage": "12V DC",
+      "source": "IRM-20-12 AC/DC converter",
+      "nodes": ["12V_MAIN", "12V_RELAY"],
+      "description": "Main 12V rail for system operation"
+    },
+    "DC_3V3": {
+      "voltage": "3.3V DC",
+      "source": "AP64200SP-13 buck regulator",
+      "nodes": ["3V3_MAIN"],
+      "description": "3.3V rail for digital circuits"
+    },
+    "DC_3V3_ISO": {
+      "voltage": "3.3V DC isolated",
+      "source": "PDSE1-S12-S3-S isolated converter + NXJ1S1205MC-R13",
+      "nodes": ["3V3_ISO", "5V_ISO"],
+      "description": "Isolated 3.3V/5V rails for power meter"
+    },
+    "DC_NEG12V": {
+      "voltage": "-12V DC",
+      "source": "AZ34063UMTR-G1 inverting converter",
+      "nodes": ["-12V"],
+      "description": "Negative 12V for analog circuits"
+    }
+  },
+
+  "main_components": {
+    "U1": {
+      "part": "STM32G070CBT6",
+      "type": "microcontroller",
+      "package": "LQFP48",
+      "description": "Main system microcontroller",
+      "power_pins": ["VDD/VDDA:6", "VSS/VSSA:7", "VBAT:4", "VREF+:5"],
+      "power_domains": ["DC_3V3"],
+      "interfaces": ["SPI1", "UART1", "UART3", "SWD", "GPIO"],
+      "oscillators": ["8MHz_XTAL", "32.768kHz_XTAL"]
+    },
+
+    "U5": {
+      "part": "ATM90E32AS-AU-Y",
+      "type": "energy_meter",
+      "package": "LQFP48",
+      "description": "3-phase energy metering IC",
+      "power_pins": ["AVDD:1", "DVDD:48", "VDD18_1:42", "VDD18_2:43"],
+      "power_domains": ["DC_3V3_ISO"],
+      "interfaces": ["SPI", "ANALOG_INPUTS"],
+      "analog_inputs": {
+        "current": ["I1P:3", "I1N:4", "I2P:5", "I2N:6", "I3P:7", "I3N:8"],
+        "voltage": ["V1P:13", "V1N:14", "V2P:15", "V2N:16", "V3P:17", "V3N:18"]
+      }
+    },
+
+    "U12": {
+      "part": "ESP32-S3-WROOM-1U",
+      "type": "wifi_module",
+      "package": "MODULE",
+      "description": "WiFi and application processor",
+      "power_pins": ["3V3:2", "GND:1,40", "EPAD:41"],
+      "power_domains": ["DC_3V3"],
+      "interfaces": ["UART0", "UART2", "SPI2", "I2C0", "GPIO"],
+      "communication": ["WiFi", "Bluetooth"]
+    },
+
+    "U2": {
+      "part": "ISO6742DWR",
+      "type": "digital_isolator",
+      "package": "SOIC16",
+      "description": "Quad-channel digital isolator",
+      "power_pins": ["VCC1:1", "VCC2:16", "GND1:2,8", "GND2:9,15"],
+      "power_domains": ["DC_3V3", "DC_3V3_ISO"],
+      "channels": 4
+    },
+
+    "X1": {
+      "part": "67910-5700 / 48099-5701",
+      "type": "pcie_connector",
+      "description": "PCIe connector for cellular module",
+      "interfaces": ["UART2", "SPI", "USIM", "POWER"],
+      "cellular_module": "Quectel BG96MA"
+    },
+
+    "TR1": {
+      "part": "IVY-CT-PCB-03-65A",
+      "type": "current_transformer",
+      "description": "Phase 1 current measurement",
+      "rating": "65A",
+      "output": "AC current proportional signal"
+    },
+
+    "TR2": {
+      "part": "IVY-CT-PCB-03-65A",
+      "type": "current_transformer",
+      "description": "Phase 2 current measurement",
+      "rating": "65A",
+      "output": "AC current proportional signal"
+    },
+
+    "TR3": {
+      "part": "IVY-CT-PCB-03-65A",
+      "type": "current_transformer",
+      "description": "Phase 3 current measurement",
+      "rating": "65A",
+      "output": "AC current proportional signal"
+    },
+
+    "K1": {
+      "part": "HF165F-50-12-HT",
+      "type": "relay",
+      "description": "Phase 1 contactor relay",
+      "coil_voltage": "12V",
+      "contact_rating": "50A",
+      "control_signal": "CHARGE_CTL_PHASE_1"
+    },
+
+    "K2": {
+      "part": "HF165F-50-12-HT",
+      "type": "relay",
+      "description": "Phase 2 contactor relay",
+      "coil_voltage": "12V",
+      "contact_rating": "50A",
+      "control_signal": "CHARGE_CTL_PHASE_2"
+    },
+
+    "K3": {
+      "part": "HF165F-50-12-HT",
+      "type": "relay",
+      "description": "Phase 3 contactor relay",
+      "coil_voltage": "12V",
+      "contact_rating": "50A",
+      "control_signal": "CHARGE_CTL_PHASE_3"
+    },
+
+    "K4": {
+      "part": "HF165F-50-12-HT",
+      "type": "relay",
+      "description": "Neutral contactor relay",
+      "coil_voltage": "12V",
+      "contact_rating": "50A",
+      "control_signal": "CHARGE_CTL_NEUTRAL"
+    },
+
+    "U11": {
+      "part": "NCV20074DTBR2G",
+      "type": "op_amp",
+      "package": "SO-14",
+      "description": "Triple op-amp for control pilot interface",
+      "power_domains": ["DC_12V", "DC_NEG12V"]
+    },
+
+    "TR5": {
+      "part": "MD0630STA-C",
+      "type": "current_transformer",
+      "description": "GFCI current measurement transformer",
+      "application": "Ground fault detection"
+    }
+  },
+
+  "signal_nets": {
+    "SPI_ATM90E": {
+      "signals": ["ATM90E_SPI1_SCLK", "ATM90E_SPI1_MOSI", "ATM90E_SPI1_MISO", "ATM90E_SPI1_CS"],
+      "source": "U1 (STM32)",
+      "destination": "U5 (ATM90E32AS)",
+      "isolation": "U2 (ISO6742DWR)",
+      "description": "SPI communication to energy meter"
+    },
+
+    "UART_ESP32_STM": {
+      "signals": ["ESP32_UART1_TX", "ESP32_UART1_RX"],
+      "source": "U12 (ESP32)",
+      "destination": "U1 (STM32)",
+      "description": "UART communication between ESP32 and STM32"
+    },
+
+    "UART_ESP32_PCIE": {
+      "signals": ["ESP32_UART2_TX", "ESP32_UART2_RX"],
+      "source": "U12 (ESP32)",
+      "destination": "X1 (PCIe cellular)",
+      "description": "UART communication to cellular module"
+    },
+
+    "POWER_CONTROL": {
+      "signals": ["CHARGE_CTL_PHASE_1", "CHARGE_CTL_PHASE_2", "CHARGE_CTL_PHASE_3", "CHARGE_CTL_NEUTRAL"],
+      "source": "U1 (STM32)",
+      "destination": ["K1", "K2", "K3", "K4"],
+      "description": "Relay control signals for power switching"
+    },
+
+    "PILOT_CONTROL": {
+      "signals": ["PWM_SOURCE_PILOT", "CP_READ"],
+      "source": "U1 (STM32)",
+      "destination": "U11 (Control pilot interface)",
+      "description": "EVSE control pilot signaling"
+    },
+
+    "GFCI_CONTROL": {
+      "signals": ["DO1_GFCI", "DO2_GFCI", "SELF_TEST_GFCI_EN"],
+      "source": "U1 (STM32)",
+      "description": "GFCI control and monitoring"
+    },
+
+    "ENERGY_METER_STATUS": {
+      "signals": ["PM0_ATM90E_ISO", "PM1_ATM90E_ISO", "IRQ0_ATM90E_ISO", "IRQ1_ATM90E_ISO", "WO_ATM90E_ISO"],
+      "source": "U5 (ATM90E32AS)",
+      "destination": "U1 (STM32)",
+      "isolation": "U2 (ISO6742DWR)",
+      "description": "Energy meter status and interrupt signals"
+    },
+
+    "RESET_SIGNALS": {
+      "signals": ["STM_nRST", "RST_ATM90E_ISO", "RST_PCIE"],
+      "description": "System reset signals for coordinated startup"
+    },
+
+    "CELLULAR_CONTROL": {
+      "signals": ["W_DISABLE_PCIE", "RST_PCIE"],
+      "source": "U12 (ESP32)",
+      "destination": "X1 (PCIe cellular)",
+      "description": "Cellular module power and reset control"
+    }
+  },
+
+  "analog_measurement_chains": {
+    "phase1_current": {
+      "sensor": "TR1 (65A CT)",
+      "conditioning": "R43-R49 voltage divider + C29 filter",
+      "adc_input": "U5 I1P:3, I1N:4",
+      "description": "Phase 1 current measurement chain"
+    },
+
+    "phase2_current": {
+      "sensor": "TR2 (65A CT)",
+      "conditioning": "R56-R62 voltage divider + C33 filter",
+      "adc_input": "U5 I2P:5, I2N:6",
+      "description": "Phase 2 current measurement chain"
+    },
+
+    "phase3_current": {
+      "sensor": "TR3 (65A CT)",
+      "conditioning": "R69-R75 voltage divider + C37 filter",
+      "adc_input": "U5 I3P:7, I3N:8",
+      "description": "Phase 3 current measurement chain"
+    },
+
+    "phase1_voltage": {
+      "input": "PHASE_1_IN",
+      "conditioning": "R49,R52 voltage divider + C30 filter",
+      "adc_input": "U5 V1P:13, V1N:14",
+      "description": "Phase 1 voltage measurement"
+    },
+
+    "phase2_voltage": {
+      "input": "PHASE_2_IN",
+      "conditioning": "R64,R66 voltage divider + C34 filter",
+      "adc_input": "U5 V2P:15, V2N:16",
+      "description": "Phase 2 voltage measurement"
+    },
+
+    "phase3_voltage": {
+      "input": "PHASE_3_IN",
+      "conditioning": "R77,R79 voltage divider + C38 filter",
+      "adc_input": "U5 V3P:17, V3N:18",
+      "description": "Phase 3 voltage measurement"
+    },
+
+    "gfci_current": {
+      "sensor": "TR5 GFCI CT",
+      "conditioning": "Analog processing",
+      "output": ["DO1_GFCI", "DO2_GFCI"],
+      "description": "Ground fault current detection"
+    },
+
+    "control_pilot": {
+      "input": "CP_READ",
+      "conditioning": "U11 op-amp circuits with R103,R101,R102,R104-R108",
+      "output": "PWM_SOURCE_PILOT",
+      "description": "EVSE control pilot interface"
+    }
+  },
+
+  "protection_circuits": {
+    "overvoltage_protection": {
+      "components": ["VR1", "VR2", "VR3", "VR4", "VR5", "VR6", "VR7"],
+      "type": "MOV",
+      "description": "Metal oxide varistors for AC input protection"
+    },
+
+    "esd_protection": {
+      "components": ["D2", "D3", "D4", "D5", "D6", "D7"],
+      "locations": ["PCIe interface", "USIM interface"],
+      "description": "ESD protection diodes"
+    },
+
+    "power_supply_protection": {
+      "components": ["D8", "D9", "D10", "D11", "D12"],
+      "type": "Schottky diodes",
+      "description": "Reverse polarity and overvoltage protection"
+    }
+  },
+
+  "connectors": {
+    "P6": {"description": "Phase 1 input connector", "type": "AC_INPUT"},
+    "P7": {"description": "Phase 3 input connector", "type": "AC_INPUT"},
+    "P8": {"description": "Phase 2 input connector", "type": "AC_INPUT"},
+    "P9": {"description": "Phase 1 output connector", "type": "AC_OUTPUT"},
+    "P10": {"description": "Phase 3 output connector", "type": "AC_OUTPUT"},
+    "P11": {"description": "Phase 2 output connector", "type": "AC_OUTPUT"},
+    "P12": {"description": "Phase 2 output connector", "type": "AC_OUTPUT"},
+    "P13": {"description": "Phase 1 output connector", "type": "AC_OUTPUT"},
+    "P14": {"description": "Phase 2 output connector", "type": "AC_OUTPUT"},
+    "P15": {"description": "Neutral output connector", "type": "AC_OUTPUT"},
+    "P16": {"description": "GFCI connector", "pins": 6, "type": "CONTROL"},
+    "P2": {"description": "SWD/JTAG programming connector", "pins": 10, "type": "PROGRAMMING"},
+    "P18": {"description": "USB connector", "type": "USB_A", "purpose": "Firmware update"},
+    "P19": {"description": "RFID module connector", "pins": 8, "type": "SPI_MODULE"},
+    "P20": {"description": "ESP32 firmware update", "pins": 4, "type": "PROGRAMMING"},
+    "P21": {"description": "Addressable LEDs connector", "pins": 3, "type": "LED_STRIP"},
+    "P22": {"description": "Temperature/LED connector", "pins": 4, "type": "SENSOR"},
+    "X1": {"description": "PCIe connector for cellular module", "type": "PCIE_MINI"},
+    "X3": {"description": "USIM card connector", "type": "SIM_CARD"}
+  },
+
+  "node_tree": {
+    "root": "SYSTEM_GND",
+    "power_tree": {
+      "AC_MAINS": {
+        "children": ["PHASE_1_IN", "PHASE_2_IN", "PHASE_3_IN", "NEUTRAL_IN", "EARTH"],
+        "protection": "MOV_array"
+      },
+      "DC_POWER": {
+        "12V_RAIL": {
+          "source": "U8_IRM-20-12",
+          "children": ["12V_MAIN", "12V_RELAY"],
+          "loads": ["U7_buck", "relay_coils", "U11_opamp"]
+        },
+        "3V3_RAIL": {
+          "source": "U6_AP64200SP",
+          "children": ["3V3_MAIN"],
+          "loads": ["U1_STM32", "U12_ESP32", "U2_isolator_primary"]
+        },
+        "3V3_ISO_RAIL": {
+          "source": "U9_PDSE1 + U10_NXJ1S1205MC + U15_TLV75533P",
+          "children": ["3V3_ISO", "5V_ISO"],
+          "loads": ["U5_ATM90E32AS", "U2_isolator_secondary"]
+        },
+        "NEG12V_RAIL": {
+          "source": "U7_AZ34063UM",
+          "children": ["-12V"],
+          "loads": ["U11_opamp"]
+        }
+      }
+    },
+
+    "signal_tree": {
+      "DIGITAL_CONTROL": {
+        "STM32_INTERFACES": {
+          "SPI1": ["ATM90E_SPI1_SCLK", "ATM90E_SPI1_MOSI", "ATM90E_SPI1_MISO", "ATM90E_SPI1_CS"],
+          "UART1": ["ESP32_UART1_TX", "ESP32_UART1_RX"],
+          "UART3": ["STM32_UART3_TX", "STM32_UART3_RX"],
+          "GPIO_CONTROL": ["CHARGE_CTL_PHASE_1", "CHARGE_CTL_PHASE_2", "CHARGE_CTL_PHASE_3", "CHARGE_CTL_NEUTRAL"],
+          "GPIO_PILOT": ["PWM_SOURCE_PILOT", "CP_READ"],
+          "GPIO_GFCI": ["DO1_GFCI", "DO2_GFCI", "SELF_TEST_GFCI_EN"]
+        },
+        "ESP32_INTERFACES": {
+          "UART0": ["ESP32_UART0_TX", "ESP32_UART0_RX"],
+          "UART1": ["ESP32_UART1_TX", "ESP32_UART1_RX"],
+          "UART2": ["ESP32_UART2_TX", "ESP32_UART2_RX"],
+          "SPI2": ["ESP32_SPI2_SCLK", "ESP32_SPI2_MOSI", "ESP32_SPI2_MISO", "ESP32_SPI2_CS_RFID"],
+          "I2C0": ["ESP32_I2C0_SCL", "ESP32_I2C0_SDA"],
+          "GPIO_CONTROL": ["W_DISABLE_PCIE", "RST_PCIE", "LED1_EN", "LED2_EN", "LED3_EN"]
+        }
+      },
+
+      "ANALOG_MEASUREMENT": {
+        "ENERGY_METER": {
+          "CURRENT_INPUTS": ["IAP", "IAN", "IBP", "IBN", "ICP", "ICN"],
+          "VOLTAGE_INPUTS": ["VAP", "VAN", "VBP", "VBN", "VCP", "VCN"],
+          "STATUS_OUTPUTS": ["PM0_ATM90E_ISO", "PM1_ATM90E_ISO", "IRQ0_ATM90E_ISO", "IRQ1_ATM90E_ISO", "WO_ATM90E_ISO"]
+        },
+        "CONTROL_PILOT": {
+          "PWM_INPUT": "PWM_SOURCE_PILOT",
+          "ADC_OUTPUT": "CP_READ",
+          "ANALOG_STAGES": ["U11A", "U11B", "U11C"]
+        },
+        "GFCI_DETECTION": {
+          "CT_INPUT": "TR5_secondary",
+          "DIGITAL_OUTPUTS": ["DO1_GFCI", "DO2_GFCI"],
+          "TEST_CONTROL": "SELF_TEST_GFCI_EN"
+        }
+      }
+    },
+
+    "isolation_boundaries": {
+      "primary_secondary": {
+        "isolator": "U2_ISO6742DWR",
+        "primary_domain": "DC_3V3",
+        "secondary_domain": "DC_3V3_ISO",
+        "isolated_signals": ["ATM90E_SPI1", "PM0_ATM90E", "PM1_ATM90E", "IRQ0_ATM90E", "IRQ1_ATM90E", "WO_ATM90E", "RST_ATM90E"]
+      },
+      "ac_dc_isolation": {
+        "isolator": "U8_IRM-20-12",
+        "primary_domain": "AC_MAINS",
+        "secondary_domain": "DC_12V",
+        "isolation_voltage": "4kV"
+      },
+      "measurement_isolation": {
+        "isolator": "U9_PDSE1 + U10_NXJ1S1205MC",
+        "primary_domain": "DC_12V",
+        "secondary_domain": "DC_3V3_ISO",
+        "purpose": "Energy meter isolation"
+      }
+    }
+  },
+
+  "simulation_parameters": {
+    "power_ratings": {
+      "max_current_per_phase": "65A",
+      "max_voltage": "400V AC",
+      "max_power": "45kW",
+      "efficiency_target": ">95%"
+    },
+    "switching_characteristics": {
+      "relay_switching_time": "10ms typical",
+      "pwm_frequency": "1kHz (control pilot)",
+      "spi_clock_max": "10MHz",
+      "uart_baud_rates": ["115200", "9600"]
+    },
+    "protection_thresholds": {
+      "overvoltage": "440V AC",
+      "overcurrent": "70A",
+      "gfci_threshold": "30mA",
+      "temperature_shutdown": "85°C"
+    }
+  }
+}
